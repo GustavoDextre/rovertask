@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { PORT, MONGO_URI } = require("./config");
 const { UserModel } = require('./models');
 const withAuth = require('./middleware');
+const path = require('path');
 const cors = require('cors');
 
 const app = express();
@@ -13,8 +14,8 @@ const secret = 'mysecretsshhh';
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(cookieParser());
 app.use(cors());
+app.use(cookieParser());
 
 const mongo_uri = MONGO_URI;
 mongoose.connect(mongo_uri, { useNewUrlParser: true, useUnifiedTopology: true}, function(err) {
@@ -23,6 +24,17 @@ mongoose.connect(mongo_uri, { useNewUrlParser: true, useUnifiedTopology: true}, 
   } else {
     console.log(`Successfully connected to ${mongo_uri}`);
   }
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/api/secret', withAuth, function(req, res) {
+  res.send('The password is potato');
 });
 
 app.post('/api/register', function(req, res) {
@@ -80,5 +92,9 @@ app.post('/api/register', function(req, res) {
   app.get('/checkToken', withAuth, function(req, res) {
     res.sendStatus(200);
   });
+
+  app.get('*', (req,res) =>{
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.listen(PORT);
